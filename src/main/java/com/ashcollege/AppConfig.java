@@ -19,43 +19,43 @@ import static com.ashcollege.utils.Constants.DB_USERNAME;
 @Configuration
 @Profile("production")
 public class AppConfig {
-
-
-    @Bean
-    public DataSource dataSource() throws Exception {
-        ComboPooledDataSource dataSource = new ComboPooledDataSource();
-        dataSource.setDriverClass("com.mysql.jdbc.Driver");
-        dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/ash2024?useSSL=false&amp;useUnicode=true&amp;characterEncoding=utf8");
-        dataSource.setUser(DB_USERNAME);
-        dataSource.setPassword(DB_PASSWORD);
-        dataSource.setMaxPoolSize(20);
-        dataSource.setMinPoolSize(5);
-        dataSource.setIdleConnectionTestPeriod(3600);
-        dataSource.setTestConnectionOnCheckin(true);
-        return dataSource;
-    }
-
-    @Bean
-    public LocalSessionFactoryBean sessionFactory() throws Exception {
-        LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
-        sessionFactoryBean.setDataSource(dataSource());
-        Properties hibernateProperties = new Properties();
-        hibernateProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL5InnoDBDialect");
-        hibernateProperties.put("hibernate.hbm2ddl.auto", "update");
-        hibernateProperties.put("hibernate.jdbc.batch_size", 50);
-        hibernateProperties.put("hibernate.connection.characterEncoding", "utf8");
-        hibernateProperties.put("hibernate.enable_lazy_load_no_trans", "true");
-        sessionFactoryBean.setHibernateProperties(hibernateProperties);
-        sessionFactoryBean.setMappingResources("objects.hbm.xml");
-        return sessionFactoryBean;
-    }
-
-    @Bean
-    public HibernateTransactionManager transactionManager() throws Exception{
-        HibernateTransactionManager transactionManager = new HibernateTransactionManager();
-        transactionManager.setSessionFactory(sessionFactory().getObject());
-        return transactionManager;
-    }
+//
+//
+//    @Bean
+//    public DataSource dataSource() throws Exception {
+//        ComboPooledDataSource dataSource = new ComboPooledDataSource();
+//        dataSource.setDriverClass("com.mysql.jdbc.Driver");
+//        dataSource.setJdbcUrl("jdbc:mysql://localhost:3306/ash2024?useSSL=false&amp;useUnicode=true&amp;characterEncoding=utf8");
+//        dataSource.setUser(DB_USERNAME);
+//        dataSource.setPassword(DB_PASSWORD);
+//        dataSource.setMaxPoolSize(20);
+//        dataSource.setMinPoolSize(5);
+//        dataSource.setIdleConnectionTestPeriod(3600);
+//        dataSource.setTestConnectionOnCheckin(true);
+//        return dataSource;
+//    }
+//
+//    @Bean
+//    public LocalSessionFactoryBean sessionFactory() throws Exception {
+//        LocalSessionFactoryBean sessionFactoryBean = new LocalSessionFactoryBean();
+//        sessionFactoryBean.setDataSource(dataSource());
+//        Properties hibernateProperties = new Properties();
+//        hibernateProperties.put("hibernate.dialect", "org.hibernate.dialect.MySQL5InnoDBDialect");
+//        hibernateProperties.put("hibernate.hbm2ddl.auto", "update");
+//        hibernateProperties.put("hibernate.jdbc.batch_size", 50);
+//        hibernateProperties.put("hibernate.connection.characterEncoding", "utf8");
+//        hibernateProperties.put("hibernate.enable_lazy_load_no_trans", "true");
+//        sessionFactoryBean.setHibernateProperties(hibernateProperties);
+//        sessionFactoryBean.setMappingResources("objects.hbm.xml");
+//        return sessionFactoryBean;
+//    }
+//
+//    @Bean
+//    public HibernateTransactionManager transactionManager() throws Exception{
+//        HibernateTransactionManager transactionManager = new HibernateTransactionManager();
+//        transactionManager.setSessionFactory(sessionFactory().getObject());
+//        return transactionManager;
+//    }
 
     @Bean
     public WebMvcConfigurer corsConfigurer() {

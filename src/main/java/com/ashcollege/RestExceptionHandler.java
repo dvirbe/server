@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 @ControllerAdvice
 public class RestExceptionHandler extends DefaultHandlerExceptionResolver {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Persist.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RestExceptionHandler.class);
 
     @ExceptionHandler(Throwable.class)
     protected ModelAndView doResolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception e) {
