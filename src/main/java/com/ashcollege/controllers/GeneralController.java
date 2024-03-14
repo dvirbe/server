@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import static com.ashcollege.utils.Errors.*;
 
@@ -25,12 +26,33 @@ public class GeneralController {
     private DbUtils dbUtils;
 
 
+    /*@CookieValue(value = "token", defaultValue = "no token") String token,*/
+    private Integer randomToken() {
+        int token;
+        Random random = new Random();
+        token = random.nextInt(1000000000);
+        return token;
+    }
+
     @RequestMapping("/sign-in")
-    public LoginResponse checkUser(String username, String password) {
+    public LoginResponse checkUser(String username, String password, HttpServletResponse response) {
         System.out.println(username + " " + password);
         boolean success = false;
+        int id = 0;
         Integer errorCode = null;
-        success = dbUtils.signIn(username, password);
+
+        id = dbUtils.signIn(username, password);
+        if (id != 0) {
+            success=true;
+            Integer token = randomToken();
+            dbUtils.changeToken(token, username, password);
+            Cookie tokenCookie = new Cookie("token", token.toString());
+            tokenCookie.setMaxAge(1000 * 60 * 24 * 365);
+            response.addCookie(tokenCookie);
+            Cookie idCookie = new Cookie("id", String.valueOf(id));
+            idCookie.setMaxAge(1000 * 60 * 24 * 365);
+            response.addCookie(idCookie);
+        }
         return new LoginResponse(success);
     }
 
@@ -47,8 +69,8 @@ public class GeneralController {
     public UsersResponse usernameList(String username) {
         List<String> usernameList;
         Integer errorCode = null;
-        usernameList = dbUtils.usernameList(username);
-        List<User> userList = usernameList.stream().map(User::new).toList();
+        List<User> userList = dbUtils.usernameList(username);
+//        List<User> userList = usernameList.stream().map(User::new).toList();
         return new UsersResponse(true, errorCode, userList);
     }
 
@@ -63,17 +85,8 @@ public class GeneralController {
 
 
     @RequestMapping("/uploadAvatar")
-    public BasicResponse follow( /*@CookieValue(value = "token", defaultValue = "no token") String token,*/String id, String path) {
-        //HttpServletResponse response,
-       // @CookieValue(value = "token", defaultValue = "") String token
-//        System.out.println(token);
-//        Cookie cookie2 = new Cookie("cookie","test12");
-//        cookie2.setPath("/");
-//        cookie2.setDomain("http://localhost:9030/");
-//        cookie2.setSecure(true);
-//        cookie2.setMaxAge(24*60*365*1000);
+    public BasicResponse follow(String id, String path, HttpServletResponse response) {
 
-//        response.addCookie(cookie2);
         boolean success = false;
         Integer errorCode = null;
         success = dbUtils.uploadAvatar(id, path);

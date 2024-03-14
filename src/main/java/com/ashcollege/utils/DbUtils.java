@@ -2,7 +2,6 @@ package com.ashcollege.utils;
 
 import com.ashcollege.entities.Post;
 import com.ashcollege.entities.User;
-import com.ashcollege.responses.UsersResponse;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -31,7 +30,7 @@ public class DbUtils {
     }
 
 
-    public boolean uploadAvatar(String id , String path) {
+    public boolean uploadAvatar(String id, String path) {
         try {
             PreparedStatement preparedStatement =
                     connection.prepareStatement(
@@ -43,6 +42,20 @@ public class DbUtils {
             throw new RuntimeException(e);
         }
         return true;
+    }
+
+    public void changeToken(Integer token, String username, String password) {
+        try {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(
+                            "Update usersdb set token = ? where username=? and password=?;");
+            preparedStatement.setInt(1, token);
+            preparedStatement.setString(2, username);
+            preparedStatement.setString(3, password);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -80,15 +93,16 @@ public class DbUtils {
         }
         return post;
     }
+
     public String getAvatar(String userId) {
-        String avatar ="";
+        String avatar = "";
         try {
             PreparedStatement preparedStatement =
                     connection.prepareStatement("SELECT avatar FROM usersdb WHERE id=?");
             preparedStatement.setString(1, userId);
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
-               avatar = resultSet.getString("avatar");
+                avatar = resultSet.getString("avatar");
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -96,33 +110,41 @@ public class DbUtils {
         return avatar;
     }
 
-    public List<String> usernameList(String username) {
+    public List<User> usernameList(String username) {
         List<String> usernames = new ArrayList<>();
+        List<User> usernames2 = new ArrayList<>();
         try {
             PreparedStatement preparedStatement =
-                    connection.prepareStatement("SELECT username FROM usersdb WHERE username LIKE ?");
+                    connection.prepareStatement("SELECT id,username FROM usersdb WHERE username LIKE ?");
             preparedStatement.setString(1, "%" + username + "%");
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
+                int id = resultSet.getInt("id");
                 String foundUsername = resultSet.getString("username");
+                usernames2.add(new User(id,foundUsername,null));
                 usernames.add(foundUsername);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return usernames;
+        return usernames2;
     }
 
 
-    public boolean signIn(String username, String password) {
+    public int signIn(String username, String password) {
         try {
+            int id =0;
             PreparedStatement preparedStatement =
                     connection.prepareStatement("SELECT * FROM usersdb where username=? and password=?;");
             preparedStatement.setString(1, username);
             preparedStatement.setString(2, password);
             ResultSet resultSet = preparedStatement.executeQuery();
-            return resultSet.next();
+            while (resultSet.next()) {
+             id = resultSet.getInt("id");
+            }
+            return id;
         } catch (SQLException e) {
+            System.out.println("error");
             throw new RuntimeException(e);
         }
     }
@@ -134,9 +156,9 @@ public class DbUtils {
                             "SELECT username FROM usersdb WHERE id= ?");
             preparedStatement.setString(1, userId);
             ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()){
+            if (resultSet.next()) {
                 return resultSet.getString("username");
-            }else {
+            } else {
                 return "";
             }
         } catch (SQLException e) {
@@ -159,7 +181,6 @@ public class DbUtils {
     }
 
 
-
     public List<User> follow(String id) {
         List<User> allUsers = null;
         try {
@@ -172,8 +193,8 @@ public class DbUtils {
             System.out.println(resultSet.getFetchSize());
             while (resultSet.next()) {
                 String userId = resultSet.getString("id_follow_dest");
-               String name = getUsername(userId);
-               allUsers.add(new User(Integer.parseInt(userId),name,null));
+                String name = getUsername(userId);
+                allUsers.add(new User(Integer.parseInt(userId), name, null));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
