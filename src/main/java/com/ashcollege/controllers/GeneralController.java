@@ -5,9 +5,15 @@ import com.ashcollege.entities.User;
 import com.ashcollege.responses.*;
 import com.ashcollege.utils.DbUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.ashcollege.utils.Errors.*;
@@ -19,12 +25,9 @@ public class GeneralController {
     private DbUtils dbUtils;
 
 
-
-
-
     @RequestMapping("/sign-in")
-    public LoginResponse checkUser (String username, String password) {
-        System.out.println(username +" "+password);
+    public LoginResponse checkUser(String username, String password) {
+        System.out.println(username + " " + password);
         boolean success = false;
         Integer errorCode = null;
         success = dbUtils.signIn(username, password);
@@ -32,53 +35,63 @@ public class GeneralController {
     }
 
     @RequestMapping("/get-post-of-user")
-    public PostResponse getPostOfUser (String userId) {
-        List<Post> postsList ;
+    public PostResponse getPostOfUser(String userId) {
+        List<Post> postsList;
         Integer errorCode = null;
         postsList = dbUtils.postsList(userId);
         System.out.println(postsList.toString());
-        return new PostResponse(true,errorCode,postsList);
+        return new PostResponse(true, errorCode, postsList);
     }
 
     @RequestMapping("/usernameList")
-    public UsersResponse usernameList (String username) {
-        List<String> usernameList ;
+    public UsersResponse usernameList(String username) {
+        List<String> usernameList;
         Integer errorCode = null;
         usernameList = dbUtils.usernameList(username);
         List<User> userList = usernameList.stream().map(User::new).toList();
-        return new UsersResponse(true,errorCode,userList);
+        return new UsersResponse(true, errorCode, userList);
     }
 
 
     @RequestMapping("/get-avatar")
-    public StringResponse getAvatar (String id ) {
-        String avatar ="";
+    public StringResponse getAvatar(String id) {
+        String avatar = "";
         Integer errorCode = null;
         avatar = dbUtils.getAvatar(id);
-        return new StringResponse(true,errorCode,avatar);
+        return new StringResponse(true, errorCode, avatar);
     }
 
 
     @RequestMapping("/uploadAvatar")
-    public BasicResponse follow (String id , String path) {
-        boolean success =false;
+    public BasicResponse follow( /*@CookieValue(value = "token", defaultValue = "no token") String token,*/String id, String path) {
+        //HttpServletResponse response,
+       // @CookieValue(value = "token", defaultValue = "") String token
+//        System.out.println(token);
+//        Cookie cookie2 = new Cookie("cookie","test12");
+//        cookie2.setPath("/");
+//        cookie2.setDomain("http://localhost:9030/");
+//        cookie2.setSecure(true);
+//        cookie2.setMaxAge(24*60*365*1000);
+
+//        response.addCookie(cookie2);
+        boolean success = false;
         Integer errorCode = null;
-        success = dbUtils.uploadAvatar(id,path);
-        return new BasicResponse(success,errorCode);
+        success = dbUtils.uploadAvatar(id, path);
+        return new BasicResponse(success, errorCode);
     }
 
 
     @RequestMapping("/follow")
-    public UsersResponse follow (String id) {
-        List<User> followList ;
+    public UsersResponse follow(String id) {
+        List<User> followList;
         Integer errorCode = null;
         followList = dbUtils.follow(id);
-        return new UsersResponse(true,errorCode,followList);
+        return new UsersResponse(true, errorCode, followList);
     }
 
     @RequestMapping("/register")
-    public RegisterResponse register (String username, String password, String repeat) {
-        boolean success =false;
+    public RegisterResponse register(String username, String password, String repeat) {
+        boolean success = false;
         Integer errorCode = null;
         Integer id = null;
         if (username != null) {
@@ -88,7 +101,7 @@ public class GeneralController {
                         User user = new User();
                         user.setUsername(username);
                         user.setPassword(password);
-                        success=dbUtils.registerUser(user);
+                        success = dbUtils.registerUser(user);
                         id = user.getId();
                     } else {
                         errorCode = ERROR_USERNAME_NOT_AVAILABLE;
@@ -106,7 +119,7 @@ public class GeneralController {
     }
 
     @RequestMapping("/username-available")
-    public UsernameAvailableResponse usernameAvailable (String username) {
+    public UsernameAvailableResponse usernameAvailable(String username) {
         boolean success = false;
         Integer errorCode = null;
         boolean available = false;
@@ -121,7 +134,7 @@ public class GeneralController {
     }
 
     @RequestMapping("/get-username")
-    public UsersResponse getUsername (String userId) {
+    public UsersResponse getUsername(String userId) {
         boolean success = false;
         Integer errorCode = null;
         String name = "";
@@ -131,14 +144,13 @@ public class GeneralController {
         } else {
             errorCode = ERROR_MISSING_USERNAME;
         }
-        return new UsersResponse(success, errorCode, List.of(new User(name,null)));
+        return new UsersResponse(success, errorCode, List.of(new User(name, null)));
 
     }
 
 
-
     @RequestMapping("get-all-users")
-    public UsersResponse getAllUsers () {
+    public UsersResponse getAllUsers() {
         List<User> allUsers = dbUtils.getAllUsers();
         return new UsersResponse(allUsers);
     }
