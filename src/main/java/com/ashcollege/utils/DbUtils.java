@@ -270,6 +270,24 @@ public class DbUtils {
         return allUsers;
     }
 
+    public boolean unFollow(String token, String id) {
+        System.out.println(token);
+        System.out.println(id);
+        try {
+            PreparedStatement preparedStatement = connection.prepareStatement(
+                    "DELETE FROM followdb\n" +
+                            "WHERE id_follow_origin = (SELECT id FROM usersdb WHERE token = ?) \n" +
+                            "and id_follow_dest = ? "
+            );
+            preparedStatement.setString(1, token);
+            preparedStatement.setString(2, id);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public List<User> getAllUsers() {
         List<User> allUsers = null;
         try {
