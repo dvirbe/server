@@ -29,19 +29,43 @@ public class DbUtils {
         return connection;
     }
 
-
-    public boolean uploadAvatar(String id, String path) {
+    public Integer registerUser(User user) {
         try {
             PreparedStatement preparedStatement =
                     connection.prepareStatement(
-                            "Update usersdb set avatar = ? where id=?");
-            preparedStatement.setString(1, path);
-            preparedStatement.setString(2, id);
+                            "INSERT INTO usersdb (username, password) VALUES (?, ?)", Statement.RETURN_GENERATED_KEYS);
+            preparedStatement.setString(1, user.getUsername());
+            preparedStatement.setString(2, user.getPassword());
             preparedStatement.executeUpdate();
+
+            ResultSet generatedKeys = preparedStatement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                return generatedKeys.getInt(1);
+            } else {
+                throw new SQLException("Failed to retrieve the generated ID.");
+            }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return true;
+    }
+
+
+    public int signIn(String username, String password) {
+        try {
+            int id =0;
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement("SELECT * FROM usersdb where username=? and password=?;");
+            preparedStatement.setString(1, username);
+            preparedStatement.setString(2, password);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                id = resultSet.getInt("id");
+            }
+            return id;
+        } catch (SQLException e) {
+            System.out.println("error");
+            throw new RuntimeException(e);
+        }
     }
 
     public void changeToken(Integer token, String username, String password) {
@@ -58,23 +82,8 @@ public class DbUtils {
         }
     }
 
-
-    public boolean registerUser(User user) {
-        try {
-            PreparedStatement preparedStatement =
-                    connection.prepareStatement(
-                            "INSERT INTO usersdb (username, password) VALUE (?, ?)");
-            preparedStatement.setString(1, user.getUsername());
-            preparedStatement.setString(2, user.getPassword());
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        return true;
-    }
-
     public List<Post> postsList(String userId) {
-        List<Post> post = new ArrayList<>();
+        List<Post> postList = new ArrayList<>();
         try {
             PreparedStatement preparedStatement =
                     connection.prepareStatement("SELECT * FROM posts WHERE userId=?");
@@ -85,14 +94,70 @@ public class DbUtils {
                 String postUserId = resultSet.getString("userId");
                 String username = resultSet.getString("username");
                 String text = resultSet.getString("text");
-                Post post1 = new Post(idPosts, postUserId, username, text);
-                post.add(post1);
+                Post post = new Post(idPosts, postUserId, username, text);
+                postList.add(post);
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return post;
+        return postList;
     }
+
+    public List<Post> feedPostList(String id) {
+        List<Post> postList = new ArrayList<>();
+        try {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement("SELECT posts.idPosts ,posts.userId, posts.username, posts.text FROM posts JOIN followdb ON posts.userId = followdb.id_follow_dest WHERE followdb.id_follow_origin = ?  ORDER BY posts.idPosts DESC  LIMIT 20;");
+            preparedStatement.setString(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                String idPosts = resultSet.getString("idPosts");
+                String postUserId = resultSet.getString("userId");
+                String username = resultSet.getString("username");
+                String text = resultSet.getString("text");
+                Post post = new Post(idPosts, postUserId, username, text);
+                System.out.println(text);
+                postList.add(post);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return postList;
+    }
+
+    public boolean uploadPost(String token, String text) {
+        try {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(
+                            "INSERT INTO posts (userId, username ,text )\n" +
+                                    "SELECT id, username , ?\n" +
+                                    "FROM usersdb \n" +
+                                    "WHERE token = ?;");
+            preparedStatement.setString(1, text);
+            preparedStatement.setString(2, token);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+            return false;
+        }
+        return true;
+    }
+
+
+    public boolean uploadAvatar(String token, String path) {
+        try {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(
+                            "Update usersdb set avatar = ? where token=?");
+            preparedStatement.setString(1, path);
+            preparedStatement.setString(2, token);
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return true;
+    }
+
 
     public String getAvatar(String userId) {
         String avatar = "";
@@ -111,8 +176,7 @@ public class DbUtils {
     }
 
     public List<User> usernameList(String username) {
-        List<String> usernames = new ArrayList<>();
-        List<User> usernames2 = new ArrayList<>();
+        List<User> usernameList = new ArrayList<>();
         try {
             PreparedStatement preparedStatement =
                     connection.prepareStatement("SELECT id,username FROM usersdb WHERE username LIKE ?");
@@ -120,34 +184,15 @@ public class DbUtils {
             ResultSet resultSet = preparedStatement.executeQuery();
             while (resultSet.next()) {
                 int id = resultSet.getInt("id");
-                String foundUsername = resultSet.getString("username");
-                usernames2.add(new User(id,foundUsername,null));
-                usernames.add(foundUsername);
+                String newUsername = resultSet.getString("username");
+                usernameList.add(new User(id,newUsername,null));
             }
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return usernames2;
+        return usernameList;
     }
 
-
-    public int signIn(String username, String password) {
-        try {
-            int id =0;
-            PreparedStatement preparedStatement =
-                    connection.prepareStatement("SELECT * FROM usersdb where username=? and password=?;");
-            preparedStatement.setString(1, username);
-            preparedStatement.setString(2, password);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            while (resultSet.next()) {
-             id = resultSet.getInt("id");
-            }
-            return id;
-        } catch (SQLException e) {
-            System.out.println("error");
-            throw new RuntimeException(e);
-        }
-    }
 
     public String getUsername(String userId) {
         try {
@@ -180,8 +225,31 @@ public class DbUtils {
         }
     }
 
+    public boolean startFollow(String token,String id) {
+        try {
+            PreparedStatement preparedStatement =
+                    connection.prepareStatement(
+                            "INSERT INTO followdb (id_follow_origin, id_follow_dest )\n" +
+                                    "SELECT id ,?\n" +
+                                    "FROM usersdb  \n" +
+                                    "WHERE token = ? AND NOT EXISTS (\n" +
+                                    "    SELECT 1\n" +
+                                    "    FROM followdb\n" +
+                                    "    WHERE id_follow_origin = usersdb.id\n" +
+                                    "    AND id_follow_dest = ?\n" +
+                                    ");");
+            preparedStatement.setString(1, id);
+            preparedStatement.setString(2, token);
+            preparedStatement.setString(3, id);
+            int rowsAffected = preparedStatement.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-    public List<User> follow(String id) {
+
+    public List<User> checkFollow(String id) {
         List<User> allUsers = null;
         try {
             allUsers = new ArrayList<>();
@@ -190,7 +258,6 @@ public class DbUtils {
             );
             preparedStatement.setString(1, id);
             ResultSet resultSet = preparedStatement.executeQuery();
-            System.out.println(resultSet.getFetchSize());
             while (resultSet.next()) {
                 String userId = resultSet.getString("id_follow_dest");
                 String name = getUsername(userId);
@@ -223,4 +290,8 @@ public class DbUtils {
         }
         return allUsers;
     }
+
 }
+
+
+
